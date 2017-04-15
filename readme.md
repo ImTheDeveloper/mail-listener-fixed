@@ -12,11 +12,11 @@ Includes also the auto reconnection example.
 
 ## Use
 
-JavaScript Code:
+Run npm install mail-listener-fixed --save
 
 ```javascript
 
-var MailListener = require("mail-listener2");
+var MailListener = require("mail-listener-fixed");
 
 var mailListener = new MailListener({
   username: "imap-username",
