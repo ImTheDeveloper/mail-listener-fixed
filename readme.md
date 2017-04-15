@@ -14,7 +14,6 @@ Includes also the auto reconnection example.
 
 JavaScript Code:
 
-
 ```javascript
 
 var MailListener = require("mail-listener2");
