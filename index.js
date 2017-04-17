@@ -53,11 +53,6 @@ MailListener.prototype.start = function() {
     this.imap.connect();
 };
 
-MailListener.prototype.restart = function() {
-      this.imap.removeAllListeners('mail');
-      this.imap.removeAllListeners('update');
-      this.imap.connect();
-    };
 
 MailListener.prototype.stop = function() {
     this.imap.end();
