@@ -1,5 +1,7 @@
 var Imap = require('imap');
 var util = require('util');
+var debug = require('debug')('imap:debug');
+var info = require('debug')('listener:info');
 var EventEmitter = require('events').EventEmitter;
 var MailParser = require("mailparser").MailParser;
 var fs = require("fs");
@@ -9,7 +11,7 @@ var async = require('async');
 module.exports = MailListener;
 
 function MailListener(options) {
-    console.log("Initializing MailListener-Modified");
+    info("Initializing MailListener-Modified");
     this.haveNewEmails = false;
     this.parsingUnread = false;
     this.markSeen = !! options.markSeen;
@@ -38,7 +40,7 @@ function MailListener(options) {
         connTimeout: options.connTimeout || 10000,
         authTimeout: options.authTimeout || 5000,
         keepalive: options.keepalive || true,
-        debug: options.debug || null
+        debug: options.debug || debug
     });
 
 
@@ -59,11 +61,11 @@ MailListener.prototype.stop = function() {
 };
 
 MailListener.prototype.restart = function() {
-    console.log('detaching existing listener');
+    info('detaching existing listener');
     this.imap.removeAllListeners('mail');
     this.imap.removeAllListeners('update');
 
-    console.log('calling imap connect');
+    info('calling imap connect');
     this.imap.connect();
 };
 
@@ -94,11 +96,11 @@ function imapError(err) {
 
 function imapMail() {
     if (!this.haveNewEmails && !this.parsingUnread) {
-            parseUnread.call(this);
-            this.parsingUnread = true;
-         } else if (this.parsingUnread) {
-            this.haveNewEmails = true;
-          }
+        parseUnread.call(this);
+        this.parsingUnread = true;
+    } else if (this.parsingUnread) {
+        this.haveNewEmails = true;
+    }
 
 }
 
@@ -110,10 +112,8 @@ function parseUnread() {
         } else if (results.length > 0) {
 
             self.imap.setFlags(results, ['\\Seen'], function (err) {
-                      if (err) {
-                              console.log(JSON.stringify(err, null, 2));
-                                      }
-                      });
+                if (err) console.error(err);
+            });
 
 
             async.each(results, function (result, callback) {
@@ -121,10 +121,12 @@ function parseUnread() {
                     bodies: '',
                     markSeen: self.markSeen
                 });
+                var parserInit = false;
                 f.on('message', function (msg, seqno) {
                     var parser = new MailParser(self.mailParserOptions);
                     var attributes = null;
                     var emlbuffer = new Buffer('');
+                    parserInit = true;
 
                     parser.on("end", function (mail) {
                         mail.eml = emlbuffer.toString('utf-8');
@@ -168,17 +170,20 @@ function parseUnread() {
                 f.once('error', function (err) {
                     self.emit('error', err);
                 });
+                f.once('end', function () {
+                    if (!parserInit) callback();
+                });
             }, function (err) {
-                console.log('all process');
+                info('all process');
                 if (err) {
                     self.emit('error', err);
                 }
                 if (self.haveNewEmails) {
-                              self.haveNewEmails = false;
-                              parseUnread.call(self);
-                            } else {
-                              self.parsingUnread = false;
-                            }
+                    self.haveNewEmails = false;
+                    parseUnread.call(self);
+                } else {
+                    self.parsingUnread = false;
+                }
 
             });
         } else {
