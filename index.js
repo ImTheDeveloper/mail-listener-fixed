@@ -14,13 +14,16 @@ function MailListener(options) {
     info("Initializing MailListener-Modified");
     this.haveNewEmails = false;
     this.parsingUnread = false;
+    this.setFlags = !! options.setFlags;
     this.markSeen = !! options.markSeen;
+    this.pushSince = !! options.pushSince;
     this.mailbox = options.mailbox || "INBOX";
     if ('string' === typeof options.searchFilter) {
         this.searchFilter = [options.searchFilter];
     } else {
         this.searchFilter = options.searchFilter || ["UNSEEN"];
     }
+    this.lastTimestamp = !! options.searchFromNow;
     this.fetchUnreadOnStart = !! options.fetchUnreadOnStart;
     this.mailParserOptions = options.mailParserOptions || {};
     if (options.attachments && options.attachmentOptions && options.attachmentOptions.stream) {
@@ -106,15 +109,20 @@ function imapMail() {
 
 function parseUnread() {
     var self = this;
-    this.imap.search(self.searchFilter, function(err, results) {
+    var searchFilter = self.searchFilter.slice();
+    self.lastTimestamp = self.lastTimestamp && new Date() || new Date(0);
+    if (self.pushSince) searchFilter.push(["SINCE", self.lastTimestamp]);
+    this.imap.search(searchFilter, function(err, results) {
         if (err) {
             self.emit('error', err);
         } else if (results.length > 0) {
 
-            self.imap.setFlags(results, ['\\Seen'], function (err) {
-                if (err) console.error(err);
-            });
-
+            // TODO: temporarily
+            if (self.setFlags) {
+                self.imap.setFlags(results, ['\\Seen'], function (err) {
+                    if (err) console.error(err);
+                });   
+            }
 
             async.each(results, function (result, callback) {
                 var f = self.imap.fetch(result, {
@@ -170,6 +178,7 @@ function parseUnread() {
                 f.once('error', function (err) {
                     self.emit('error', err);
                 });
+                // TODO: temporarily
                 f.once('end', function () {
                     if (!parserInit) callback();
                 });
