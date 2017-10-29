@@ -10,6 +10,10 @@ import * as path from 'path';
 
 const debug = require('debug')('imap:listener');
 
+const formatDate = () => {
+    return new Date().toISOString().split('T')[0];
+};
+
 const eachPromise = (data, func, log) => {
     return new Promise((resolve, reject) => {
         each(data, (item, done) => func(item).catch(log).then(done), err => {
@@ -80,10 +84,10 @@ export default class MailListener extends EventEmitter {
     
     search() {
         let filter = this.options.filter.slice();
-        if (this.lastFetch === true) this.lastFetch = new Date();
+        if (this.lastFetch === true) this.lastFetch = formatDate();
         if (this.lastFetch === false) this.lastFetch = new Date(0);
         if (this.options.setSince) filter.push(["SINCE", this.lastFetch]);
-        this.lastFetch = new Date();
+        this.lastFetch = formatDate();
         this.imap.search(filter, (err, uids) => {
             if (err) return this.onError(err);
             if (uids.length > 0) {
@@ -148,8 +152,10 @@ export default class MailListener extends EventEmitter {
                             
                         })
                         .then(mail => {
-                            this.emit('mail', mail, seg, attributes);
+                            if (!attributes) attributes = {};
+                            if (!attributes.uid) attributes.uid = uid;
                             if (this.lastUID < uid) this.lastUID = uid;
+                            this.emit('mail', mail, seg, attributes);
                             resolve();
                         })
                         .catch(reject);
