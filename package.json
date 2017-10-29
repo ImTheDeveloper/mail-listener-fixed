@@ -1,6 +1,6 @@
 {
   "name": "mail-listener-fixed",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "Mail-listener2 with modifications from various forks. Including fix for duplicate email parse, reconnect on disconnect and allow listeners to fire more than once.",
   "dependencies": {
     "async": "^2.5.0",
