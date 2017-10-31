@@ -89,6 +89,7 @@ export default class MailListener extends EventEmitter {
         if (this.options.setSince) filter.push(["SINCE", this.lastFetch]);
         this.lastFetch = formatDate();
         this.imap.search(filter, (err, uids) => {
+            uids = uids.filter(x => x > this.lastUID);
             if (err) return this.onError(err);
             if (uids.length > 0) {
                 if (this.options.setFlags) {
@@ -246,8 +247,9 @@ export default class MailListener extends EventEmitter {
     }
 
     onReady() {
-        this.imap.openBox(this.options.mailbox, false, err => {
+        this.imap.openBox(this.options.mailbox, false, (err, box) => {
             if (err) return this.onError(err);
+            this.lastUID = box.uidnext - 1;
             this.emit('connected'); debug('connected');
             if (this.options.fetchOnStart) this.search();
             this.imap.on('mail', this.onMail.bind(this));
