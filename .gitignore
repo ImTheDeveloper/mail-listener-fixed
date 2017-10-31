@@ -61,5 +61,8 @@ typings/
 # dotenv environment variables file
 .env
 
+# IntelliJ IDEA
+mail-listener.iml
+.idea
 
 # End of https://www.gitignore.io/api/node`
