@@ -254,6 +254,7 @@ export default class MailListener extends EventEmitter {
             if (this.options.fetchOnStart) this.search();
             this.imap.on('mail', this.onMail.bind(this));
             this.imap.on('update', this.onMail.bind(this));
+            this.retry = 0;
         });
     }
     
