@@ -3,7 +3,7 @@
   "version": "2.1.1",
   "description": "Mail-listener2 with modifications from various forks. Including fix for duplicate email parse, reconnect on disconnect and allow listeners to fire more than once.",
   "dependencies": {
-    "async": "^2.5.0",
+    "async": "^3.2.2",
     "debug": "^3.1.0",
     "imap": "^0.8.19",
     "lodash": "^4.17.4",
